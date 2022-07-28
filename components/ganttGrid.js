@@ -1,160 +1,196 @@
 import { useEffect, useState } from "react";
-import GridLayout from "react-grid-layout";
+import Draggable from "react-draggable";
+import { Resizable, ResizableBox } from "react-resizable";
 import styled from "styled-components";
-import { useSizeUnitsContext } from "../context/sizeUnits";
-import monthInfo from "./month.json"
-
-//TODO: Clean up this file
-//TODO: Find a way to block y axis
-//TODO: Find a way to place elements correctly on the grid
-//TODO: Find a way make the scrollbar start at the first element
-//TODO: Find a way to update start and end date of tasks when resized/moved
+import monthInfo from './month.json'
+import { useSizeUnitsContext } from "../context/sizeUnits"
 
 const GridContainer = styled.div`
     display: flex;
     flex-direction: column;
     width: 70vw;
-    background-color: blue;
+    background-color: #F5F7F8;
     overflow: auto;
+    scrollbar-gutter: auto;
     overflow-y: hidden;
 `
 
-const TimelineHeaderContainer = styled.div`
+const GridHeaderContainer = styled.div`
     display: flex;
     flex-direction: row;
-    width: fit-content;
-    background-color: yellow;
-`
-
-const TimelineHeaderText = styled.div`
-    display: flex;
-    color: white;
-    background-color: grey;
-    text-align: center;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
+    width: ${props => (props.nbElements * 5) * props.widthUnit || 150* props.widthUnit}px;
+    height: ${props => props.heightUnit * 5}px;
+    background-color: #ECEFF1;
+    color: black;
 `
 
-const Task = styled.div`
+const GridHeaderDateElement = styled.div`
     display: flex;
     flex-direction: row;
-    background-color: yellow;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-right: 1px solid black;
+`
+
+const TaskElement = styled.div`
+    display: flex;
+    background-color: ${props => props.isOdd ? '#90A4AE' : '#ECEFF1'};
+    height: ${props => props.heightUnit * 5}px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 1px 1px 1px 1px rgb(0 0 0 / 20%);
+`
+
+const TaskContainer = styled.div`
+    display: flex;
+    background-color: #F5F7F8;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 5px;
 `
 
 function GanttGrid({tasks}) {
-    const heightUnit = useSizeUnitsContext().heightUnit
+    const {widthUnit, heightUnit} = useSizeUnitsContext()
     const [dates, setDates] = useState([])
-    const [layout, setLayout] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [rerenderTrigger, setRerenderTrigger] = useState(0)
+    const [isDragDisabled, setIsDragDisabled] = useState(false);
 
-    function generateDates() {
+    function treatAsUTC(date) {
+        var result = new Date(date);
+        result.setMinutes(result.getMinutes() - result.getTimezoneOffset());
+        return result;
+    }
+    
+    function daysBetween(startDate, endDate) {
+        var millisecondsPerDay = 24 * 60 * 60 * 1000;
+        return (treatAsUTC(endDate) - treatAsUTC(startDate)) / millisecondsPerDay;
+    }
+
+    function stringifyDate(date) {
+        var string = [...date]
+        string = string.map(item => item.toLocaleString('en-US', {
+            minimumIntegerDigits: 2,
+            useGrouping: false
+        }))
+        string = string.join("-")
+        return string;
+    }
+
+    function generateDates(tasks) {
+        var allDates = [];
         var tmpDates = [];
-        var todayMonth = new Date().getMonth();
-        var todayDay = new Date().getDate();
-        var actualDay = todayDay - 1;
-        var actualMonth = todayMonth;
-        if (actualDay < 1) {
-            actualMonth--;
-            actualDay = monthInfo[actualMonth].length;
-        }
-        for (var i = 0; i < 15; i++) {
-            tmpDates.push(`${actualDay} ${monthInfo[actualMonth].name}`)
-            if (actualDay > 0) {
-                actualDay--
+        tasks.forEach(task => {
+            allDates.push(task.startDate)
+            allDates.push(task.endDate)
+        });
+        var earliestDate = allDates.reduce(function (pre, cur) {
+            return Date.parse(pre) > Date.parse(cur) ? cur : pre;
+        }).split("-").map((x) => parseInt(x))
+        var latestDate = allDates.reduce(function (pre, cur) {
+            return Date.parse(pre) < Date.parse(cur) ? cur : pre;
+        }).split("-").map((x) => parseInt(x))
+        for (var i = 0, actualDate = [...earliestDate]; i < 15; i++) {
+            var stringifiedDate = stringifyDate(actualDate)
+            tmpDates.push(stringifiedDate)
+            if (actualDate[0] > 1) {
+                actualDate[0] -= 1;
             } else {
-                actualMonth--;
-                if (actualMonth < 0) {
-                    actualMonth = 12;
+                if (actualDate[1] > 1) {
+                    actualDate[1] -= 1;
+                    actualDate[0] = monthInfo[actualDate[1] - 1].length
+                } else {
+                    actualDate[2] -= 1;
+                    actualDate[1] = 12;
+                    actualDate[0] = monthInfo[actualDate[1] - 1].length
                 }
-                actualDay = monthInfo[actualMonth].length;
             }
         }
         tmpDates = tmpDates.reverse()
-        actualDay = todayDay;
-        actualMonth = todayMonth;
-        for (var i = 0; i < 15; i++) {
-            tmpDates.push(`${actualDay} ${monthInfo[actualMonth].name}`)
-            if (actualDay <= monthInfo[actualMonth].length) {
-                actualDay++
+        var diffBetweenLatestAndEarliest = daysBetween(earliestDate.reverse().join('-'), latestDate.reverse().join('-'))
+        for (var i = 0, actualDate = [...earliestDate.reverse()]; i < 15 + diffBetweenLatestAndEarliest; i++) {
+            var stringifiedDate = stringifyDate(actualDate)
+            tmpDates.push(stringifiedDate)
+            if (actualDate[0] < monthInfo[actualDate[1] - 1].length) {
+                actualDate[0] += 1;
             } else {
-                actualMonth++;
-                if (actualMonth > 11) {
-                    actualMonth = 0;
+                if (actualDate[1] < 12) {
+                    actualDate[1] += 1;
+                    actualDate[0] = 1;
+                } else {
+                    actualDate[2] += 1;
+                    actualDate[1] = 1;
+                    actualDate[0] = 1
                 }
-                actualDay = 1;
             }
         }
-        setDates(tmpDates);
-        return tmpDates
+        tmpDates.splice(15, 1);
+        setDates(tmpDates)
     }
 
-    function generateHeaderLayout(dates) {
-        var tmpLayout = []
-        dates.forEach((date, idx) => {
-            tmpLayout.push({i: date.replace(" ", ""), x: idx, y: 0, w: 1, h: 1, static: true})
-        });
-        return tmpLayout
-    }
-
-    function generateTaskLayout(tmpLayout) {
-        tasks.forEach((task, idx) => {
-            tmpLayout.push({i: task.name.replace(" ", ""), x: 0, y: idx + 1, w: 1, h: 1, isResizable: true, isBounded: true, resizeHandles: ["e", "w"]})
-        })
-        setLayout(tmpLayout)
-    }
-    
     useEffect(() => {
-        generateTaskLayout(generateHeaderLayout(generateDates()))
-        setIsLoading(false);
+        generateDates(tasks)
     }, []);
 
-    if (isLoading || heightUnit === 0)  {
-        return (
-            <GridContainer>
-                <h1>Loading...</h1>
-            </GridContainer>
-        )
-    }
+    useEffect(() => {
+        console.log("Change of is drag disabled");
+    }, [isDragDisabled]);
 
-    function checkLayoutChangeCorrectness(newLayout) {
-        console.log("🚀 ~ file: ganttGrid.js ~ line 118 ~ checkLayoutChangeCorrectness ~ layout", layout)
-        if (!layout.length || !newLayout) return;
-        if (newLayout !== layout) {
-            newLayout.forEach((item, idx) => {
-                if (item.y !== layout[idx].y) {
-                    alert("You cannot change the line of a task");
-                    setRerenderTrigger(Math.random)
-                    return;
-                }
-            })
-        } else {
-            setLayout(newLayout);
-        }
-    }
-
-    return (
-        <GridContainer height={heightUnit}>
-            <GridLayout
-                className="layout"
-                layout={layout}
-                cols={30}
-                rowHeight={3 * heightUnit}
-                width={30 * 150}
-                margin={[0, 0]}
-                onLayoutChange={checkLayoutChangeCorrectness}
-            >
+    return(
+        <GridContainer>
+            <GridHeaderContainer heightUnit={heightUnit} widthUnit={widthUnit} nbElements={dates.length}>
                 {dates.map(date => {
-                    return(<TimelineHeaderText key={date.replace(" ", "")}>{date}</TimelineHeaderText>)
+                    return (
+                    <GridHeaderDateElement
+                    key={date}>
+                        {date}
+                    </GridHeaderDateElement>)
                 })}
-                {tasks.map(task => {
-                    return (<Task key={task.name.replace(" ", "")}>{task.name}</Task>)
-                })}
-            </GridLayout>
+            </GridHeaderContainer>
+            {tasks.map((task, idx) => {
+                var startDateOffset = dates.findIndex(element => element === task.startDate)
+                return (
+                    <TaskContainer
+                    key={idx}
+                    isOdd={idx % 2}
+                    heightUnit={heightUnit}
+                    >
+                        <Draggable
+                        disabled={isDragDisabled}
+                        axis="x"
+                        grid={[widthUnit * 5, widthUnit * 5]}
+                        positionOffset={{x: startDateOffset * widthUnit * 5, y: "0"}}
+                        >
+                            <ResizableBox
+                            width={(widthUnit * daysBetween(task.startDate.split('-').reverse().join('-'), task.endDate.split('-').reverse().join('-')) * 5)}
+                            height={heightUnit * 5}
+                            axis="x"
+                            handleSize={[10, 10]}
+                            onResizeStart={() => {console.log("start");setIsDragDisabled(true)}}
+                            onResizeStop={() => {console.log("end");setIsDragDisabled(false)}}
+                            resizeHandles={["e", "w"]}
+                            
+                            >
+                                <TaskElement
+                                isOdd={idx % 2}
+                                width={(widthUnit * daysBetween(task.startDate.split('-').reverse().join('-'), task.endDate.split('-').reverse().join('-')) * 5)}
+                                heightUnit={heightUnit}>
+                                    {task.name}
+                                </TaskElement>
+                            </ResizableBox>
+                            
+                        </Draggable>
+                    </TaskContainer>
+                    
+                )
+            })}
         </GridContainer>
-    );
+    )
 }
 
 export default GanttGrid;

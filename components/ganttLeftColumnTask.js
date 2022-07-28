@@ -1,12 +1,13 @@
 import styled from "styled-components";
-import { useSizeUnitsContext } from "../context/sizeUnits";
+import { useSizeUnitsContext } from "../context/sizeUnits"
 
 const TableRow = styled.tr`
-    background-color: lightgrey;
+    background-color: #ECEFF1;
     text-align: center;
     height: ${props => props.height || 30}px;
+    padding: 0;
     &:nth-child(odd) {
-        background-color: lightgray;
+        background-color: #90A4AE;
     }
 `
 
@@ -14,7 +15,7 @@ function GanttLeftColumnTask({name, startDate, endDate}) {
     const heightUnit = useSizeUnitsContext().heightUnit
 
     return (
-        <TableRow height={3* heightUnit}>
+        <TableRow height={heightUnit * 5}>
             <td>
                 {name}
             </td>

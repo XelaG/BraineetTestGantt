@@ -5,7 +5,7 @@ import GanttLeftColumnTask from "./ganttLeftColumnTask";
 
 
 const Table = styled.table`
-    width: 30vw;
+    width: 30%;
     table-layout: auto;
     border-spacing: 0;
 `
@@ -13,7 +13,8 @@ const Table = styled.table`
 const GanttContainer = styled.div`
     display: flex;
     flex-direction: row;
-    width: 100vw;
+    width: 100%;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 `
 
 function Gantt() {
@@ -21,14 +22,14 @@ function Gantt() {
     const dataExample = [
         {
             name: "Task 1",
-            startDate: "2022-08-04",
-            endDate: "2022-08-08",
+            startDate: "04-08-2022",
+            endDate: "06-08-2022",
             completionRate: 50,
         },
         {
             name: "Task 2",
-            startDate: "2022-08-05",
-            endDate: "2022-08-08",
+            startDate: "05-08-2022",
+            endDate: "08-08-2022",
             completionRate: 10,
         }
     ]
