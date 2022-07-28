@@ -161,19 +161,21 @@ function GanttGrid({tasks}) {
                     heightUnit={heightUnit}
                     >
                         <Draggable
-                        disabled={isDragDisabled}
                         axis="x"
                         grid={[widthUnit * 5, widthUnit * 5]}
                         positionOffset={{x: startDateOffset * widthUnit * 5, y: "0"}}
+                        onDrag={() => {
+                            if (isDragDisabled) return false;
+                        }}
                         >
                             <ResizableBox
                             width={(widthUnit * daysBetween(task.startDate.split('-').reverse().join('-'), task.endDate.split('-').reverse().join('-')) * 5)}
                             height={heightUnit * 5}
                             axis="x"
                             handleSize={[10, 10]}
-                            onResizeStart={() => {console.log("start");setIsDragDisabled(true)}}
-                            onResizeStop={() => {console.log("end");setIsDragDisabled(false)}}
-                            resizeHandles={["e", "w"]}
+                            onResizeStart={() => setIsDragDisabled(true)}
+                            onResizeStop={() => setIsDragDisabled(false)}
+                            resizeHandles={["e"]}
                             
                             >
                                 <TaskElement
