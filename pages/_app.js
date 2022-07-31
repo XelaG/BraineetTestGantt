@@ -1,11 +1,14 @@
 import "../styles/globals.css"
 import { SizeUnitsWrapper } from '../context/sizeUnits';
 import 'react-resizable/css/styles.css'
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 
 function MyApp({ Component, pageProps }) {
     return (
     <SizeUnitsWrapper>
-      <Component {...pageProps} />
+      <ToastContainer />
+        <Component {...pageProps} />
     </SizeUnitsWrapper>
   )}
   

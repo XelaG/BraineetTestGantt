@@ -3,7 +3,7 @@ import { useSizeUnitsContext } from "../context/sizeUnits"
 
 const HeaderContainer = styled.thead`
     background-color: #ECEFF1;
-    color: black;
+    color: #263238;
     padding: 0;
     height: ${props => props.height || 30}px;
 `

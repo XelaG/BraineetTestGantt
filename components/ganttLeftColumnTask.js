@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { useSizeUnitsContext } from "../context/sizeUnits"
+import { BsTrashFill } from "react-icons/bs";
 
 const TableRow = styled.tr`
     background-color: #ECEFF1;
@@ -11,7 +12,19 @@ const TableRow = styled.tr`
     }
 `
 
-function GanttLeftColumnTask({name, startDate, endDate}) {
+const DeleteButton = styled.div`
+    display: flex;
+    background-color: #e33d3d;
+    border-radius: 100%;
+    width: 2vw;
+    height: 2vw;
+    align-items: center;
+    justify-content: center;
+    color: #F5F7F8;
+    cursor: pointer;    
+`
+
+function GanttLeftColumnTask({name, startDate, endDate, removeTask}) {
     const heightUnit = useSizeUnitsContext().heightUnit
 
     return (
@@ -24,6 +37,11 @@ function GanttLeftColumnTask({name, startDate, endDate}) {
             </td>
             <td>
                 {endDate}
+            </td>
+            <td>
+                <DeleteButton onClick={removeTask}>
+                    <BsTrashFill/>
+                </DeleteButton>
             </td>
         </TableRow>
         

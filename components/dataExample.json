@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Task 1",
+        "startDate": "2022-08-04",
+        "endDate": "2022-08-06",
+        "completionRate": 50
+    },
+    {
+        "name": "Task 2",
+        "startDate": "2022-08-05",
+        "endDate": "2022-08-08",
+        "completionRate": 10
+    }
+]

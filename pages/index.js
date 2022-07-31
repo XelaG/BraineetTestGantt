@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import Gantt from "../components/gantt";
-import Task from "../components/task";
 
 const CenteredDiv = styled.div`
 display: flex;

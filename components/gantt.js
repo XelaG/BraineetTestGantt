@@ -2,12 +2,18 @@ import styled from "styled-components"
 import GanttGrid from "./ganttGrid";
 import GanttHeader from "./ganttHeader";
 import GanttLeftColumnTask from "./ganttLeftColumnTask";
+import { useState, useEffect } from 'react';
+import dataExample from './dataExample.json'
+import GanttAddTaskForm from "./ganttAddTaskForm";
+import GanttFooter from "./ganttFooter";
 
 
 const Table = styled.table`
     width: 30%;
     table-layout: auto;
     border-spacing: 0;
+    ${props => props.isModalOpen ? "filter: blur(5px)" : ""};
+    background-color: #ECEFF1;
 `
 
 const GanttContainer = styled.div`
@@ -17,32 +23,77 @@ const GanttContainer = styled.div`
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 `
 
-function Gantt() {
+const AddTaskModal = styled.div`
+    display: flex;
+    width: 40vw;
+    height: 40vh;
+    background-color: #546E7A;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    box-shadow: 2px 2px 2px 1px rgba(0,0,0,0.2);
+    border-radius: 1vw;
+`
 
-    const dataExample = [
-        {
-            name: "Task 1",
-            startDate: "04-08-2022",
-            endDate: "06-08-2022",
-            completionRate: 50,
-        },
-        {
-            name: "Task 2",
-            startDate: "05-08-2022",
-            endDate: "08-08-2022",
-            completionRate: 10,
+function Gantt() {
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [tasks, setTasks] = useState([]);
+
+    //Loads tasks from local storage or use dafault data
+    useEffect(() => {
+        if (!localStorage.getItem("tasks")) {
+            setTasks(dataExample)
+        } else {
+            setTasks(JSON.parse(localStorage.getItem("tasks")))
         }
-    ]
+    }, []);
+
+    //Saves or clear the tasks in local storage on task change
+    useEffect(() => {
+        if (tasks.length !== 0) {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        } else {
+            localStorage.removeItem("tasks")
+        }
+    }, [tasks]);
+
+    // If there is no tasks we display the form to create one so the gantt is not empty
+    if (tasks.length === 0) {
+        return (
+            <AddTaskModal>
+                <GanttAddTaskForm notClosable addTask={(task) => setTasks([...tasks, task])} />
+            </AddTaskModal>
+        )
+    }
 
     return(
         <GanttContainer>
-            <Table>
+            {isModalOpen ? 
+            <AddTaskModal>
+                <GanttAddTaskForm closeModal={() => setIsModalOpen(false)} addTask={(task) => setTasks([...tasks, task])} />
+            </AddTaskModal> : null}
+            <Table isModalOpen={isModalOpen}>
                 <GanttHeader />
                 <tbody>
-                    {dataExample.map((task, idx) => <GanttLeftColumnTask key={idx} name={task.name} startDate={task.startDate} endDate={task.endDate} />)}
+                    {tasks.map((task, idx) => 
+                    <GanttLeftColumnTask
+                    key={idx}
+                    name={task.name}
+                    startDate={task.startDate}
+                    endDate={task.endDate}
+                    removeTask={() => {
+                        if (confirm("Are your sure you want to delete this task ?")) {
+                            var newTasks = [...tasks];
+                            newTasks.splice(idx, 1);
+                            setTasks(newTasks);
+                        }
+                    }} />)}
                 </tbody>
+                <GanttFooter openModal={() => setIsModalOpen(true)} />
             </Table>
-            <GanttGrid tasks={dataExample}/>
+            <GanttGrid isModalOpen={isModalOpen} tasks={tasks} updateTasks={setTasks}/>
         </GanttContainer>
         
     );
