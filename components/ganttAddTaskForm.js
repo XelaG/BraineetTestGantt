@@ -59,8 +59,10 @@ const GanttAddTaskForm = ({addTask, closeModal, notClosable}) => {
             endDate: e.target.endDate.value,
             completionRate: 0,
         }
-        addTask(task)
-        closeModal()
+        addTask(task);
+        if (closeModal) {
+            closeModal();
+        }
     } 
 
     return ( 

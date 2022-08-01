@@ -35,7 +35,7 @@ const GanttGridTask = ({task, startDateOffset, updateTask, dates, idx}) => {
     const [isDragDisabled, setIsDragDisabled] = useState(false);
     const [dragPosition, setDragPosition] = useState({x: startDateOffset * widthUnit * 5, y: 0})
     const [taskWidth, setTaskWidth] = useState((widthUnit * daysBetween(task.startDate.split('-').join('-'), task.endDate.split('-').join('-')) * 5))
-    const [taskProgressWidth, setTaskProgressWidth] = useState((widthUnit * daysBetween(task.startDate.split('-').join('-'), task.endDate.split('-').join('-')) * 5) * (task.completionRate / 100))
+    const [taskProgressWidth, setTaskProgressWidth] = useState(0)
     const firstTaskRef = useRef(null)
     
     
@@ -45,6 +45,10 @@ const GanttGridTask = ({task, startDateOffset, updateTask, dates, idx}) => {
             firstTaskRef.current.scrollIntoView({inline: "start"})
         }
     }, [firstTaskRef.current]);
+
+    useEffect(() => {
+        setTaskProgressWidth(taskWidth * (task.completionRate / 100))
+    }, [taskWidth]);
 
     //Manages the drag and drop drop to store position in state
     function manageDrop(e) {
